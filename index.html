@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WorkNest – Part-time jobs for Indian students in Europe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4.4.1/dist/email.min.js"></script>
+<style>
+:root{--ink:#14213D;--saffron:#F4A23A;--sky:#EAF0FA;--teal:#1E8C8C;--line:#D6DEEC;--bg:#F8FAFD;--white:#fff}
+*{box-sizing:border-box;margin:0}
+body{font-family:'Bricolage Grotesque',system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5}
+.wrap{max-width:960px;margin:0 auto;padding:0 20px}
+header{background:var(--ink);color:#fff;padding:48px 0 64px}
+.logo{font-weight:800;font-size:1.2rem;margin-bottom:36px}
+.logo span{color:var(--saffron)}
+h1{font-size:clamp(2rem,6vw,3.4rem);line-height:1.08;font-weight:800;max-width:15em}
+header p{margin-top:16px;max-width:34em;color:#C9D3E8}
+.filters{margin-top:-28px;background:var(--white);border:2px solid var(--ink);border-radius:14px;padding:14px;display:grid;gap:10px;grid-template-columns:2fr 1fr 1fr}
+input,select,textarea,button{font:inherit;color:inherit}
+input,select,textarea{width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:8px;background:var(--white)}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:3px solid var(--saffron);outline-offset:1px}
+.count{margin:28px 0 12px;font-weight:600}
+.list{display:grid;gap:12px;padding-bottom:60px}
+.job{background:var(--white);border:1.5px solid var(--line);border-radius:12px;padding:18px;display:grid;grid-template-columns:1fr auto;gap:8px 16px;align-items:center}
+.job h2{font-size:1.15rem}
+.meta{color:#4B5A7A;font-size:.95rem}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.tag{background:var(--sky);border-radius:99px;padding:2px 10px;font-size:.85rem}
+.tag.ok{background:#DDF2F0;color:#0E5E5E}
+.pay{font-weight:800;text-align:right}
+.btn{background:var(--saffron);border:2px solid var(--ink);border-radius:8px;padding:9px 16px;font-weight:600;cursor:pointer}
+.btn:hover{background:#FFB652}
+.empty{background:var(--white);border:1.5px dashed var(--line);border-radius:12px;padding:28px;text-align:center}
+dialog{border:2px solid var(--ink);border-radius:14px;padding:22px;width:min(460px,92vw)}
+dialog::backdrop{background:rgba(20,33,61,.55)}
+form{display:grid;gap:10px}
+label{font-weight:600;font-size:.95rem}
+.row{display:flex;gap:10px;justify-content:flex-end;margin-top:6px}
+.ghost{background:none;border:2px solid var(--line);border-radius:8px;padding:9px 16px;cursor:pointer}
+#msg{min-height:1.4em;font-size:.95rem}
+footer{border-top:1px solid var(--line);padding:22px 0;color:#4B5A7A;font-size:.9rem}
+@media(max-width:640px){.filters{grid-template-columns:1fr}.job{grid-template-columns:1fr}.pay{text-align:left}}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="logo">Work<span>Nest</span></div>
+    <h1>Part-time jobs that fit your student visa</h1>
+    <p>Verified listings for Indian students in Europe. Find work around your classes, then apply in two minutes.</p>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="filters" role="search">
+    <input id="q" type="search" placeholder="Search by job title or company" aria-label="Search jobs">
+    <select id="city" aria-label="City"><option value="">All cities</option></select>
+    <select id="cat" aria-label="Category"><option value="">All categories</option></select>
+  </div>
+  <p class="count" id="count" aria-live="polite"></p>
+  <div class="list" id="list"></div>
+</main>
+
+<dialog id="dlg">
+  <form id="form">
+    <h2 id="dlgTitle">Apply</h2>
+    <label for="name">Full name</label>
+    <input id="name" name="from_name" required>
+    <label for="email">Email</label>
+    <input id="email" name="from_email" type="email" required>
+    <label for="phone">Phone (with country code)</label>
+    <input id="phone" name="phone" type="tel">
+    <label for="note">Why are you a good fit?</label>
+    <textarea id="note" name="message" rows="3"></textarea>
+    <p id="msg"></p>
+    <div class="row">
+      <button type="button" class="ghost" id="cancel">Cancel</button>
+      <button class="btn" id="send">Send application</button>
+    </div>
+  </form>
+</dialog>
+
+<footer><div class="wrap">WorkNest. Check work-hour limits on your residence permit before you accept any job.</div></footer>
+
+<script>
+/* ---------- 1. EmailJS settings: paste your own values from emailjs.com ---------- */
+const EMAILJS = {
+  publicKey: "YOUR_PUBLIC_KEY",
+  serviceId: "YOUR_SERVICE_ID",
+  templateId: "YOUR_TEMPLATE_ID",
+  fallbackEmail: "Shivajichintu92@gmail.com"   // used if EmailJS is not set up yet
+};
+
+/* ---------- 2. Listings: edit, add or remove jobs here ---------- */
+const JOBS = [
+  {id:1,title:"Warehouse operator (evenings)",company:"Logis Paris",city:"Paris",cat:"Logistics",pay:"€12.20/h",hours:"15 h/week",lang:"English ok"},
+  {id:2,title:"Barista",company:"Café Lumière",city:"Paris",cat:"Hospitality",pay:"€11.90/h",hours:"12 h/week",lang:"Basic French"},
+  {id:3,title:"Delivery partner",company:"QuickBite",city:"Berlin",cat:"Delivery",pay:"€13/h",hours:"Flexible",lang:"English ok"},
+  {id:4,title:"Data entry assistant",company:"NordData",city:"Amsterdam",cat:"Office",pay:"€14/h",hours:"10 h/week",lang:"English ok"},
+  {id:5,title:"Retail assistant",company:"Maison Mode",city:"Lyon",cat:"Retail",pay:"€11.80/h",hours:"14 h/week",lang:"Basic French"},
+  {id:6,title:"Kitchen helper",company:"Spice Route",city:"Berlin",cat:"Hospitality",pay:"€12.50/h",hours:"16 h/week",lang:"English ok"},
+  {id:7,title:"Customer support (English)",company:"HelpBridge",city:"Amsterdam",cat:"Office",pay:"€15/h",hours:"20 h/week",lang:"English ok"},
+  {id:8,title:"Cleaning staff (mornings)",company:"BrightCare",city:"Lyon",cat:"Cleaning",pay:"€11.90/h",hours:"10 h/week",lang:"English ok"}
+];
+
+/* ---------- 3. App logic ---------- */
+const $ = id => document.getElementById(id);
+const list = $("list"), dlg = $("dlg");
+let current = null;
+
+const uniq = k => [...new Set(JOBS.map(j => j[k]))].sort();
+uniq("city").forEach(c => $("city").add(new Option(c, c)));
+uniq("cat").forEach(c => $("cat").add(new Option(c, c)));
+
+function esc(s){return s.replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+
+function render(){
+  const q = $("q").value.trim().toLowerCase(), city = $("city").value, cat = $("cat").value;
+  const rows = JOBS.filter(j =>
+    (!q || (j.title + " " + j.company).toLowerCase().includes(q)) &&
+    (!city || j.city === city) && (!cat || j.cat === cat));
+  $("count").textContent = rows.length + (rows.length === 1 ? " job found" : " jobs found");
+  if (!rows.length){
+    list.innerHTML = '<div class="empty">No jobs match these filters. Clear the search or pick another city.</div>';
+    return;
+  }
+  list.innerHTML = rows.map(j => `
+    <article class="job">
+      <div>
+        <h2>${esc(j.title)}</h2>
+        <div class="meta">${esc(j.company)} · ${esc(j.city)}</div>
+        <div class="tags">
+          <span class="tag ok">Verified</span>
+          <span class="tag">${esc(j.cat)}</span>
+          <span class="tag">${esc(j.hours)}</span>
+          <span class="tag">${esc(j.lang)}</span>
+        </div>
+      </div>
+      <div>
+        <div class="pay">${esc(j.pay)}</div>
+        <button class="btn" data-id="${j.id}">Apply</button>
+      </div>
+    </article>`).join("");
+}
+
+["q","city","cat"].forEach(id => $(id).addEventListener("input", render));
+
+list.addEventListener("click", e => {
+  const b = e.target.closest("button[data-id]");
+  if (!b) return;
+  current = JOBS.find(j => j.id == b.dataset.id);
+  $("dlgTitle").textContent = "Apply: " + current.title;
+  $("msg").textContent = "";
+  dlg.showModal();
+});
+
+$("cancel").addEventListener("click", () => dlg.close());
+
+$("form").addEventListener("submit", async e => {
+  e.preventDefault();
+  const btn = $("send"), msg = $("msg");
+  const params = {
+    job_title: current.title, company: current.company, city: current.city,
+    from_name: $("name").value, from_email: $("email").value,
+    phone: $("phone").value, message: $("note").value
+  };
+  const ready = EMAILJS.publicKey !== "YOUR_PUBLIC_KEY";
+  if (!ready){
+    const body = `Job: ${params.job_title} at ${params.company}%0D%0AName: ${params.from_name}%0D%0AEmail: ${params.from_email}%0D%0APhone: ${params.phone}%0D%0A%0D%0A${encodeURIComponent(params.message)}`;
+    location.href = `mailto:${EMAILJS.fallbackEmail}?subject=${encodeURIComponent("Application: " + current.title)}&body=${body}`;
+    return;
+  }
+  btn.disabled = true; msg.textContent = "Sending your application…";
+  try{
+    await emailjs.send(EMAILJS.serviceId, EMAILJS.templateId, params, {publicKey: EMAILJS.publicKey});
+    msg.textContent = "Application sent. The employer will contact you by email.";
+    $("form").reset();
+    setTimeout(() => dlg.close(), 1800);
+  }catch(err){
+    msg.textContent = "Could not send. Check your connection and try again.";
+  }
+  btn.disabled = false;
+});
+
+render();
+</script>
+</body>
+</html>
